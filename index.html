@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spin & Win – AME Bazaar</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #0b1c3f;
+      color: white;
+      text-align: center;
+    }
+    header {
+      padding: 20px;
+      background-color: #0b1c3f;
+    }
+    header img {
+      height: 80px;
+    }
+    h1 {
+      margin-top: 10px;
+      color: gold;
+    }
+    canvas {
+      margin-top: 20px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 15px 30px;
+      font-size: 18px;
+      background-color: gold;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      color: #000;
+      padding: 20px;
+      border-radius: 10px;
+      z-index: 1000;
+      width: 300px;
+    }
+    #popup a {
+      color: green;
+      font-weight: bold;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="ame-logo.png" alt="AME Bazaar Logo">
+    <h1>🎡 Spin & Win – AME Bazaar 🎉</h1>
+    <p>📍 Kirari, Delhi – 110086 | 📞 9953569533</p>
+    <p>🌍 <a href="https://share.google/jWHIkHurMY9XfhN1T" style="color:gold;" target="_blank">Google Maps</a> |
+       💬 <a href="https://wa.me/919953569533" style="color:gold;" target="_blank">WhatsApp Us</a></p>
+    <p><em>“Sabse Behtar, Sabse Sasta – AME Bazaar”</em></p>
+  </header>
+
+  <canvas id="wheel" width="400" height="400"></canvas>
+  <button onclick="spin()">SPIN</button>
+
+  <div id="popup">
+    <h3>🎉 You Got: <span id="result"></span></h3>
+    <p>Visit AME Bazaar to claim your reward. WhatsApp us your result!</p>
+    <a id="waLink" target="_blank">📨 Share on WhatsApp</a>
+  </div>
+
+  <audio id="spinSound" src="spin.mp3"></audio>
+  <audio id="congratsSound" src="congrats.mp3"></audio>
+
+  <script>
+    const wheel = document.getElementById('wheel');
+    const ctx = wheel.getContext('2d');
+    const segments = ["Bucket No. 1", "Try Again", "Bucket No. 2", "Better Luck", "₹500 Cash", "Try Again"];
+    const colors = ['#1f3d7a', '#13274f', '#1f3d7a', '#13274f', '#1f3d7a', '#13274f'];
+    let angle = 0;
+    const spinSound = document.getElementById("spinSound");
+    const congratsSound = document.getElementById("congratsSound");
+    const popup = document.getElementById("popup");
+    const resultText = document.getElementById("result");
+    const waLink = document.getElementById("waLink");
+
+    function drawWheel() {
+      const arc = Math.PI * 2 / segments.length;
+      for (let i = 0; i < segments.length; i++) {
+        const start = i * arc;
+        ctx.beginPath();
+        ctx.fillStyle = colors[i];
+        ctx.moveTo(200, 200);
+        ctx.arc(200, 200, 180, start, start + arc);
+        ctx.fill();
+        ctx.save();
+        ctx.translate(200, 200);
+        ctx.rotate(start + arc / 2);
+        ctx.fillStyle = 'white';
+        ctx.font = '16px Arial';
+        ctx.textAlign = 'right';
+        ctx.fillText(segments[i], 170, 5);
+        ctx.restore();
+      }
+      const img = new Image();
+      img.src = 'ame-logo.png';
+      img.onload = () => {
+        ctx.beginPath();
+        ctx.arc(200, 200, 50, 0, Math.PI * 2);
+        ctx.closePath();
+        ctx.fillStyle = '#0b1c3f';
+        ctx.fill();
+        ctx.drawImage(img, 150, 150, 100, 100);
+      };
+    }
+
+    drawWheel();
+
+    function spin() {
+      if (localStorage.getItem("spun") === "true") {
+        alert("You have already spun!");
+        return;
+      }
+
+      spinSound.play();
+      let spinAngle = Math.floor(3600 + Math.random() * 720);
+      const duration = 4000;
+      let start = null;
+
+      function animate(timestamp) {
+        if (!start) start = timestamp;
+        const progress = timestamp - start;
+        const rotate = spinAngle * Math.min(progress / duration, 1);
+        wheel.style.transform = `rotate(${rotate}deg)`;
+        if (progress < duration) {
+          requestAnimationFrame(animate);
+        } else {
+          const finalAngle = rotate % 360;
+          const index = Math.floor((360 - finalAngle) / (360 / segments.length)) % segments.length;
+          const result = (segments[index] === '₹500 Cash') ? segments[3] : segments[index];
+          resultText.innerText = result;
+          popup.style.display = 'block';
+          waLink.href = `https://wa.me/919953569533?text=Hi%20AME%20Bazaar,%20I%20spun%20the%20wheel%20and%20got%20${encodeURIComponent(result)}!`;
+          congratsSound.play();
+          if (result !== 'Try Again') {
+            localStorage.setItem("spun", "true");
+          }
+        }
+      }
+
+      requestAnimationFrame(animate);
+    }
+  </script>
+</body>
+</html>
